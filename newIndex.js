@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
-const port = process.env.PORT || 9000;
+const port = process.env.PORT || 9001;
 const db = require('./db');
 const dbModels = require('./dbModels');
 db.openDb();
