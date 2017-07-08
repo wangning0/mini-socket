@@ -63,7 +63,7 @@ app.get('/getUnreads', (req, res) => {
 // 获取当前未读消息的接口
 
 io.on('connection', function(socket) {
-    const fromId = socket.handshake.query.from;
+    const fromId = socket.handshake.query.from.toString();
     const toId = socket.handshake.query.to;
     const checkExistRoom = hash(toId, fromId);
     db.findOneMessage(dbModels.getModel('roomMessage'), {
