@@ -94,6 +94,7 @@ io.on('connection', function(socket) {
         }
 
         socket.on('join', (username) => {
+            console.log(2121);
             db.findOneMessage(dbModels.getModel('message'), {
                 username: username
             }, function(err, doc) {
@@ -108,6 +109,7 @@ io.on('connection', function(socket) {
             db.findOneMessage(dbModels.getModel('roomMessage'), {
                 roomId: roomId
             }, function (err, doc) {
+                console.log(doc);
                 if(!doc.length || !doc[0].roomChatCount) {
                     db.update(dbModels.getModel('roomMessage'), {
                         roomId: roomId
@@ -120,11 +122,13 @@ io.on('connection', function(socket) {
                     }, {
                         roomChatCount: Number(doc[0].roomChatCount) + 1
                     }, (err, doc) => {})
+                    console.log(doc[0].msg, 2121);
                     if(doc[0].msg) {
                         const r = doc[0].msg;
                         r && r.map(item => {
                             io.to(roomId).emit('new message', item);
                         })
+                        console.log(doc[0].msg,322);
                         db.findOneMessage(dbModels.getModel('message'), {
                             username: fromId
                         }, function (err, doc) {
@@ -132,6 +136,7 @@ io.on('connection', function(socket) {
                             const newMessage = data && data.filter(item => {
                                 return item.name != toId
                             });
+                            console.log(newMessage, 111);
                             db.update(dbModels.getModel('message'), {
                                 username: fromId
                             }, {
@@ -154,14 +159,17 @@ io.on('connection', function(socket) {
                 roomId: roomId
             }, function (err, doc) {
                 if(doc && doc.length) { 
+                    const r = doc[0].msg;
+                    r.push(data);
                     if(doc[0].roomChatCount == 1) {
-                        const r = doc[0].msg;
-                        r.push(data);
                         db.findOneMessage(dbModels.getModel('message'), {
                             username: toId
                         }, function (err, doc) {
+                            console.log(doc,21);
                             if(doc && doc.length) {
+                                console.log('....')
                                 // const fromIdData = doc[0].msg[fromId] || [];
+                                let count = 0;
                                 const newMessage = doc[0].msg.map(item => {
                                     if(item.name == fromId) {
                                         const newItemMessage = item.message;
@@ -171,37 +179,46 @@ io.on('connection', function(socket) {
                                             message: newItemMessage
                                         };
                                     } else {
+                                        count++;
                                         return item;
                                     }
                                 })
+                                console.log(count, doc[0].msg.length);
+                                if(count == doc[0].msg.length) {
+                                    newMessage.push({
+                                        name: fromId,
+                                        message: [data.message]
+                                    })
+                                }
                                 db.update(dbModels.getModel('message'), {
                                     username: toId
                                     }, {
                                         msg: newMessage
                                     }, (err, doc) => {})
                             } else {
+                                console.log('??');
                                 db.create(dbModels.getModel('message'), {
                                     username: toId,
                                     msg: [{
                                         name: data.name,
                                         message: [data.message]
                                     }]
-                                }, (err, doc) => {})
+                                }, (err, doc) => {console.log(err,2112)})
                             }
                         })
-                        db.update(dbModels.getModel('roomMessage'), {
-                           roomId: roomId 
-                        }, {
-                            msg: r
-                        }, (err, doc) => {})
                     } else {
                         io.to(roomId).emit('new message', data);
-                        db.update(dbModels.getModel('roomMessage'), {
-                           roomId: roomId 
-                        }, {
-                            msg: []
-                        }, (err, doc) => {})
+                        // db.update(dbModels.getModel('roomMessage'), {
+                        //    roomId: roomId 
+                        // }, {
+                        //     msg: []
+                        // }, (err, doc) => {})
                     }
+                     db.update(dbModels.getModel('roomMessage'), {
+                        roomId: roomId 
+                    }, {
+                        msg: r
+                    }, (err, doc) => {})
                 }
             })
         });
